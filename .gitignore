@@ -1,7 +1,3 @@
-# Visual Studio 2015 user specific files
-.vs/
-/.vs/
-
 Binaries
 DerivedDataCache
 Intermediate
@@ -11,7 +7,7 @@ Build
 .vscode
 .vs
 *.VC.db
-*.opensef
+*.opensdf
 *.opendb
 *.sdf
 *.slh
