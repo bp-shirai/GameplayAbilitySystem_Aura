@@ -3,14 +3,14 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Character/AuraCharacterBase.h"
-#include "AuraEmeny.generated.h"
+#include "GameFramework/GameModeBase.h"
+#include "AuraGameModeBase.generated.h"
 
 /**
  * 
  */
 UCLASS(Abstract)
-class AURA_API AAuraEmeny : public AAuraCharacterBase
+class AURA_API AAuraGameModeBase : public AGameModeBase
 {
 	GENERATED_BODY()
 	
