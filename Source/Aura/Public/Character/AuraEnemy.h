@@ -16,9 +16,16 @@ class AURA_API AAuraEnemy : public AAuraCharacterBase, public IEnemyInterface
 	GENERATED_BODY()
 	
 public:
+	AAuraEnemy();
+
 	virtual void HighlightActor() override;
+
 	virtual void UnHighlightActor() override;
 
-	UPROPERTY(BlueprintReadOnly, Category = "Enemy")
-	bool bHighlighted = false;
+	//UPROPERTY(BlueprintReadOnly, Category = "Combat")
+	//bool bHighlighted = false;
+
+protected:
+	virtual void BeginPlay() override;
+
 };
