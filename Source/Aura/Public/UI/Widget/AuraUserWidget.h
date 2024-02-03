@@ -9,19 +9,19 @@
 /**
  * 
  */
-UCLASS()
+UCLASS(Abstract)
 class AURA_API UAuraUserWidget : public UUserWidget
 {
 	GENERATED_BODY()
 	
 public:
-	UFUNCTION(BlueprintCallable, Category = "Widget")
+	UFUNCTION(BlueprintCallable, Category = "WidgetController")
 	void SetWidgetController(UObject* InWidgetController);
 
-	UPROPERTY(BlueprintReadOnly, Category = "Widget")
+	UPROPERTY(BlueprintReadOnly, Category = "WidgetController")
 	TObjectPtr<UObject> WidgetController;
 
 protected:
-	UFUNCTION(BlueprintImplementableEvent, Category = "Widget")
+	UFUNCTION(BlueprintImplementableEvent, Category = "WidgetController")
 	void WidgetControllerSet();
 };

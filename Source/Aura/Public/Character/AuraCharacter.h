@@ -6,6 +6,8 @@
 #include "Character/AuraCharacterBase.h"
 #include "AuraCharacter.generated.h"
 
+class UGameplayEffect;
+
 /**
  * 
  */
@@ -21,6 +23,21 @@ public:
 
 	virtual void OnRep_PlayerState() override;
 
+	// Combat Interface
+	virtual int32 GetPlayerLevel() const override;
+
+protected:
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Defaults")
+	TSubclassOf<UGameplayEffect> DefaultPrimaryAttributes;
+
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Defaults")
+	TSubclassOf<UGameplayEffect> DefaultSecondaryAttributes;
+
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Defaults")
+	TSubclassOf<UGameplayEffect> DefaultVitalAttributes;
+
+	virtual void InitializeDefaultAttributes() const;
+
 private:
-	void InitAbilityActorInfo();
+	virtual void InitAbilityActorInfo() override;
 };

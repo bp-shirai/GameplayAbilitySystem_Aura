@@ -4,4 +4,8 @@
 
 #include "CoreMinimal.h"
 
-constexpr auto CUSTOM_DEPTH_RED = 250;
+DECLARE_LOG_CATEGORY_EXTERN(LogAura, Log, All);
+
+constexpr int32 CUSTOM_DEPTH_RED = 250;
+
+constexpr ECollisionChannel ECC_Projectile = ECollisionChannel::ECC_GameTraceChannel1;
