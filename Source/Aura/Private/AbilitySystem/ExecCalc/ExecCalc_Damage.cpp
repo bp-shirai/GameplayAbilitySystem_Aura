@@ -7,6 +7,9 @@
 #include "AuraGameplayTags.h"
 #include "AbilitySystem/AuraAbilitySystemLibrary.h"
 #include "Interaction/CombatInterface.h"
+#include "AuraAbilityTypes.h"
+#include "AbilitySystemBlueprintLibrary.h"
+#include "Aura.h"
 
 /*
  * Struct to hold our attributes we want to access
@@ -19,6 +22,7 @@ struct FAuraDamageStatics
 	DECLARE_ATTRIBUTE_CAPTUREDEF(CriticalHitChance)
 	DECLARE_ATTRIBUTE_CAPTUREDEF(CriticalHitResistance)
 	DECLARE_ATTRIBUTE_CAPTUREDEF(CriticalHitDamage)
+	DECLARE_ATTRIBUTE_CAPTUREDEF(DamageResistance)
 
 
 	FAuraDamageStatics()
@@ -29,6 +33,7 @@ struct FAuraDamageStatics
 		DEFINE_ATTRIBUTE_CAPTUREDEF(UAuraAttributeSet, CriticalHitChance, Source, false);
 		DEFINE_ATTRIBUTE_CAPTUREDEF(UAuraAttributeSet, CriticalHitResistance, Target, false);
 		DEFINE_ATTRIBUTE_CAPTUREDEF(UAuraAttributeSet, CriticalHitDamage, Source, false);
+		DEFINE_ATTRIBUTE_CAPTUREDEF(UAuraAttributeSet, DamageResistance, Target, false);
 	}
 };
 
@@ -48,6 +53,7 @@ UExecCalc_Damage::UExecCalc_Damage()
 	RelevantAttributesToCapture.Add(DamageStatics().CriticalHitChanceDef);
 	RelevantAttributesToCapture.Add(DamageStatics().CriticalHitResistanceDef);
 	RelevantAttributesToCapture.Add(DamageStatics().CriticalHitDamageDef);
+	RelevantAttributesToCapture.Add(DamageStatics().DamageResistanceDef);
 }
 
 void UExecCalc_Damage::Execute_Implementation(const FGameplayEffectCustomExecutionParameters& ExecutionParams, FGameplayEffectCustomExecutionOutput& OutExecutionOutput) const
@@ -60,7 +66,7 @@ void UExecCalc_Damage::Execute_Implementation(const FGameplayEffectCustomExecuti
 
 	const FGameplayEffectSpec& Spec = ExecutionParams.GetOwningSpec(); // この実行を実行しているエフェクトの所有スペックを返します。
 
-	//Grab the tags from source and target
+	// Grab the tags from source and target
 	const FGameplayTagContainer* SourceTags = Spec.CapturedSourceTags.GetAggregatedTags();
 	const FGameplayTagContainer* TargetTags = Spec.CapturedTargetTags.GetAggregatedTags();
 
@@ -69,20 +75,37 @@ void UExecCalc_Damage::Execute_Implementation(const FGameplayEffectCustomExecuti
 	const int32 SourcePlayerLevel = SourceCombatInterface->GetPlayerLevel();
 	const int32 TargetPlayerLevel = TargetCombatInterface->GetPlayerLevel();
 
-	//Setup our evaluate params
+	// Setup our evaluate params
 	FAggregatorEvaluateParameters EvalParams;
 	EvalParams.SourceTags = SourceTags;
 	EvalParams.TargetTags = TargetTags;
 
 	// Get Damage Set By Caller Magnitude
-	float Damage = Spec.GetSetByCallerMagnitude(Effect_Damage);
+	float Damage = 0.f;		//float Damage = Spec.GetSetByCallerMagnitude(DamageType_All);
+	for (auto& DamageType : Spec.GetDynamicAssetTags())
+	{
+		Damage += Spec.GetSetByCallerMagnitude(DamageType);
+	}
 
 	// Capture BlockChance on Target, and determine if there was a successful Block if Block, halve the damage.
 	float TargetBlockChance = 0.f;
 	ExecutionParams.AttemptCalculateCapturedAttributeMagnitude(DamageStatics().BlockChanceDef, EvalParams, TargetBlockChance);
 	TargetBlockChance = FMath::Max<float>(0.f, TargetBlockChance);
+	//UE_LOG(LogAura, Log, TEXT("TargetBlockChance = %f"), TargetBlockChance);
 
 	const bool bBlocked = FMath::RandRange(1, 100) < TargetBlockChance;
+
+	
+	float DamageResistance = 0.f;
+	ExecutionParams.AttemptCalculateCapturedAttributeMagnitude(DamageStatics().DamageResistanceDef, EvalParams, DamageResistance);
+	DamageResistance = FMath::Max<float>(0.f, DamageResistance);
+	
+	//UE_LOG(LogAura, Log, TEXT("Source DamageType.Fire = %s"), TEXT_BOOL(EvalParams.SourceTags->HasTag(DamageType_Fire)));
+	//UE_LOG(LogAura, Log, TEXT("Target DamageType.Fire = %s"), TEXT_BOOL(EvalParams.TargetTags->HasTag(DamageType_Fire)));
+	//UE_LOG(LogAura, Log, TEXT("Target DamageResistance = %f"), DamageResistance);
+
+	Damage = FMath::Max<float>(0.f, Damage - DamageResistance);
+
 
 	// If Block, halve the damage.
 	Damage = bBlocked ? Damage / 2.f : Damage;
@@ -104,6 +127,9 @@ void UExecCalc_Damage::Execute_Implementation(const FGameplayEffectCustomExecuti
 	const FRealCurve* EffectiveArmorCurve = CharacterClassInfo->DamageCalculationCoefficients->FindCurve("EffectiveArmor", FString());
 	const float EffectiveArmorCoefficient = EffectiveArmorCurve->Eval(TargetPlayerLevel);
 
+	const FRealCurve* EffectiveCriticalHitResistanceCurve = CharacterClassInfo->DamageCalculationCoefficients->FindCurve("CriticalHitResistance", FString());
+	const float EffectiveCriHitResCoefficient = EffectiveCriticalHitResistanceCurve->Eval(TargetPlayerLevel);
+
 	// ArmorPenetration ignores a percentage of the Target's Armor.
 	const float EffectiveArmor = TargetArmor * (100 - SourceArmorPenetration * ArmorPenetrationCoefficient) / 100.f;
 	// Armor ignores a percentage of incoming Damage.
@@ -123,8 +149,17 @@ void UExecCalc_Damage::Execute_Implementation(const FGameplayEffectCustomExecuti
 	CriticalHitDamage = FMath::Max<float>(0.f, CriticalHitDamage);
 
 	// Critical Hit Resistance reduces Critical Hit Chance by a certain percentage
-	const float EffectiveCriticalHitChance = CriticalHitChance - CriticalHitResistance * 0.15f;
+	const float EffectiveCriticalHitChance = CriticalHitChance - CriticalHitResistance * EffectiveCriHitResCoefficient;
 	const bool bCriticalHit = FMath::RandRange(1, 100) < EffectiveCriticalHitChance;
+
+	
+	// Using a custom effect context.
+	if (FAuraGameplayEffectContext* AuraEffectContext = static_cast<FAuraGameplayEffectContext*>(Spec.GetContext().Get()))
+	{
+		AuraEffectContext->SetIsBlockedHit(bBlocked);//UAuraAbilitySystemLibrary::SetIsBlockedHit(Spec.GetContext(), bBlocked);
+		AuraEffectContext->SetIsCriticalHit(bCriticalHit);
+	}
+
 	// Double damage plus a bonus if critical hit
 	Damage = bCriticalHit ? 2.f * Damage + CriticalHitDamage : Damage;
 

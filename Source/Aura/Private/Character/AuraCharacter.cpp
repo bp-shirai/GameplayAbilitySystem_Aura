@@ -7,6 +7,8 @@
 #include "AbilitySystem/AuraAbilitySystemComponent.h"
 #include "Player/AuraPlayerController.h"
 #include "UI/HUD/AuraHUD.h"
+#include "AuraGameplayTags.h"
+#include "Aura.h"
 
 AAuraCharacter::AAuraCharacter()
 {
@@ -18,6 +20,8 @@ AAuraCharacter::AAuraCharacter()
 	bUseControllerRotationPitch = false;
 	bUseControllerRotationRoll = false;
 	bUseControllerRotationYaw = false;
+
+	OwnedGameplayTags.AddTagFast(Team_Player);
 }
 
 void AAuraCharacter::PossessedBy(AController* NewController) // call from server
@@ -27,6 +31,10 @@ void AAuraCharacter::PossessedBy(AController* NewController) // call from server
 	// Init ability actor info for the server
 	InitAbilityActorInfo();
 	AddCharacterAbilities();
+
+	//UE_LOG(LogAura, Warning, TEXT(__FUNCTION__));
+	//UE_DEBUG_FUNCTION();
+
 }
 
 void AAuraCharacter::OnRep_PlayerState() // call from client
@@ -35,6 +43,10 @@ void AAuraCharacter::OnRep_PlayerState() // call from client
 
 	// Init ability actor info for the client
 	InitAbilityActorInfo();
+
+	//UE_LOG(LogAura, Warning, TEXT(__FUNCTION__));
+	//UE_DEBUG_FUNCTION();
+
 }
 
 int32 AAuraCharacter::GetPlayerLevel() const
@@ -67,7 +79,7 @@ void AAuraCharacter::InitAbilityActorInfo()
 	{
 		if (AAuraHUD* HUD = PC->GetHUD<AAuraHUD>())
 		{
-			HUD->InitOverlay();// PC, PS, AbilitySystem, AttributeSet);
+			HUD->InitOverlay();
 		}
 	}
 }

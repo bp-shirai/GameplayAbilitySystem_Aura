@@ -33,8 +33,40 @@ UE_DEFINE_GAMEPLAY_TAG(Input_Action2, "Input.Action2")
 UE_DEFINE_GAMEPLAY_TAG(Input_Action3, "Input.Action3")
 UE_DEFINE_GAMEPLAY_TAG(Input_Action4, "Input.Action4")
 
-UE_DEFINE_GAMEPLAY_TAG(Effect_Damage, "Effect.Damage")
-UE_DEFINE_GAMEPLAY_TAG(Effect_HitReact, "Effect.HitReact")
+//UE_DEFINE_GAMEPLAY_TAG(Effect_Damage, "Effect.Damage")
+//UE_DEFINE_GAMEPLAY_TAG(Effect_HitReact, "Effect.HitReact")
+UE_DEFINE_GAMEPLAY_TAG(State_HitReact, "State.HitReact")
+UE_DEFINE_GAMEPLAY_TAG(State_HitReact_BlockedHit, "State.HitReact.BlockedHit")
+UE_DEFINE_GAMEPLAY_TAG(State_HitReact_CriticalHit, "State.HitReact.CriticalHit")
+UE_DEFINE_GAMEPLAY_TAG(State_HitReact_Dead, "State.HitReact.Dead")
+
+UE_DEFINE_GAMEPLAY_TAG(DamageType_All, "DamageType")
+UE_DEFINE_GAMEPLAY_TAG(DamageType_Physical, "DamageType.Physical")
+UE_DEFINE_GAMEPLAY_TAG(DamageType_Fire, "DamageType.Fire")
+UE_DEFINE_GAMEPLAY_TAG(DamageType_Lightning, "DamageType.Lightning")
+UE_DEFINE_GAMEPLAY_TAG(DamageType_Arcane, "DamageType.Arcane")
+
+UE_DEFINE_GAMEPLAY_TAG(Event_EndAbility, "Event.EndAbility")
+
+
+UE_DEFINE_GAMEPLAY_TAG(Team_Player, "Team.Player")
+UE_DEFINE_GAMEPLAY_TAG(Team_Enemy, "Team.Enemy")
+
+UE_DEFINE_GAMEPLAY_TAG(Message_All, "Message")
+
+UE_DEFINE_GAMEPLAY_TAG(Abilities_Attack_Default, "Abilities.Attack.Default")
+UE_DEFINE_GAMEPLAY_TAG(Abilities_Attack_Summon, "Abilities.Attack.Summon")
+
+UE_DEFINE_GAMEPLAY_TAG(Montage_Attack_1, "Montage.Attack.1")
+UE_DEFINE_GAMEPLAY_TAG(Montage_Attack_2, "Montage.Attack.2")
+UE_DEFINE_GAMEPLAY_TAG(Montage_Attack_3, "Montage.Attack.3")
+UE_DEFINE_GAMEPLAY_TAG(Montage_Attack_4, "Montage.Attack.4")
+
+
+UE_DEFINE_GAMEPLAY_TAG(CombatSocket_Weapon, "CombatSocket.Weapon")
+UE_DEFINE_GAMEPLAY_TAG(CombatSocket_LeftHand, "CombatSocket.LeftHand")
+UE_DEFINE_GAMEPLAY_TAG(CombatSocket_RightHand, "CombatSocket.RightHand")
+UE_DEFINE_GAMEPLAY_TAG(CombatSocket_Tail, "CombatSocket.Tail")
 
 
 //FAuraGameplayTags FAuraGameplayTags::GameplayTags;

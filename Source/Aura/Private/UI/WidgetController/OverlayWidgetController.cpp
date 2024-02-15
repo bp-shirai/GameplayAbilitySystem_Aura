@@ -4,6 +4,7 @@
 #include "UI/WidgetController/OverlayWidgetController.h"
 #include "AbilitySystem/AuraAttributeSet.h"
 #include "AbilitySystem/AuraAbilitySystemComponent.h"
+#include "AuraGameplayTags.h"
 
 void UOverlayWidgetController::BroadcastInitialValues()
 {
@@ -34,10 +35,10 @@ void UOverlayWidgetController::BindCallbacksToDependencies()
 	ASC->OnEffectAssetTagsApplied.AddLambda(
 		[this](const FGameplayTagContainer& AssetTags)
 		{
-			static const auto MessageTag = FGameplayTag::RequestGameplayTag(FName("Message"));
+			//static const auto MessageTag = FGameplayTag::RequestGameplayTag(FName("Message"));
 			for (const FGameplayTag& Tag : AssetTags)
 			{
-				if (Tag.MatchesTag(MessageTag))
+				if (Tag.MatchesTag(Message_All))
 				{
 					// TODO: Broadcast the tag to the widget controller
 				

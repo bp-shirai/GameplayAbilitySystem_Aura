@@ -10,6 +10,8 @@
 #include "Aura.h"
 #include "AbilitySystemBlueprintLibrary.h"
 #include "AbilitySystemComponent.h"
+#include "AbilitySystem/AuraAbilitySystemLibrary.h"
+#include "Interaction/COMBATINTERFACE.H"
 
 AAuraProjectile::AAuraProjectile()
 {
@@ -38,6 +40,7 @@ void AAuraProjectile::BeginPlay()
 
 	SetLifeSpan(LifeSpan);
 
+	//Sphere->OnComponentBeginOverlap.AddUniqueDynamic(this, &ThisClass::OnSphereBeginOverlap);
 	Sphere->OnComponentBeginOverlap.AddDynamic(this, &ThisClass::OnSphereBeginOverlap);
 	if (IsValid(GetInstigator()))
 	{
@@ -64,6 +67,7 @@ void AAuraProjectile::Destroyed()
 	if (!bHit && !HasAuthority())
 	{
 		PlayHitEffects();
+		bHit = true;
 	}
 	Super::Destroyed();
 }
@@ -77,22 +81,40 @@ void AAuraProjectile::LifeSpanExpired()
 
 void AAuraProjectile::OnSphereBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {	
+	FGameplayEffectSpec* EffectSpec = DamageEffectSpecHandle.Data.Get();
+	AActor* EffectCauser = EffectSpec ? EffectSpec->GetContext().GetEffectCauser() : nullptr;
+
+	if (EffectCauser == OtherActor || EffectSpec == nullptr || !IsValid(OtherActor))
+	{
+		return;
+	}
+
+	// Friendly Fire
+	if (UAuraAbilitySystemLibrary::IsTeamFriend(OtherActor, EffectCauser))
+	{
+		return;
+	}
+
+	if (OtherActor->Implements<UCombatInterface>())
+	{
+		if (ICombatInterface::Execute_IsDead(OtherActor)) return;
+	}
+
 	Sphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
-	PlayHitEffects();
+	if (!bHit)
+	{
+		PlayHitEffects();
+		bHit = true;
+	}
 
 	if (HasAuthority())
 	{
 		if (UAbilitySystemComponent* TargetASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(OtherActor))
 		{
-			TargetASC->BP_ApplyGameplayEffectSpecToSelf(DamageEffectSpecHandle);
+			TargetASC->ApplyGameplayEffectSpecToSelf(*EffectSpec);
 		}
 		Destroy();
-	}
-	else
-	{
-		bHit = true;
-		
 	}
 }
 

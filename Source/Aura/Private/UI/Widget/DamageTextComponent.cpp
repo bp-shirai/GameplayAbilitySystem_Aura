@@ -7,6 +7,6 @@ UDamageTextComponent::UDamageTextComponent()
 {
 	SetWidgetSpace(EWidgetSpace::Screen);
 	SetDrawAtDesiredSize(true);
-	SetInitialSharedLayerName("HUD");
+	SetInitialSharedLayerName("HUD_Text");
 	SetInitialLayerZOrder(0);
 }

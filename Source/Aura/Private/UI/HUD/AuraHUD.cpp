@@ -9,6 +9,8 @@
 
 #include "Blueprint/WidgetBlueprintLibrary.h"
 #include "Kismet/GameplayStatics.h"
+#include "Aura.h"
+
 
 UOverlayWidgetController* AAuraHUD::GetOverlayWidgetController()
 {
@@ -33,21 +35,20 @@ UAttributeMenuWidgetController* AAuraHUD::GetAttributeMenuWidgetController()
 }
 
 // Call from AAuraCharacter::InitAbilityActorInfo()
-void AAuraHUD::InitOverlay()//APlayerController* PC, APlayerState* PS, UAbilitySystemComponent* ASC, UAttributeSet* AS) 
+void AAuraHUD::InitOverlay() 
 {
 	checkf(OverlayWidgetClass, TEXT("OverlayWidgetClass uninitialized, please fill out B_AuraHUD"));
 	checkf(OverlayWidgetControllerClass, TEXT("OverlayWidgetControllerClass uninitialized, please fill out B_AuraHUD"));
 
 	OverlayWidget = CreateWidget<UAuraUserWidget>(GetWorld(), OverlayWidgetClass);
 
-	//const FWidgetControllerParams WCParams(PC, PS, ASC, AS);
-	UOverlayWidgetController* OverlayWC = GetOverlayWidgetController();//{PC, PS ,ASC, AS});
+
+	UOverlayWidgetController* OverlayWC = GetOverlayWidgetController();
 
 	OverlayWidget->SetWidgetController(OverlayWC);
 	OverlayWC->BroadcastInitialValues();
 
 	OverlayWidget->AddToViewport();
-
 }
 
 void AAuraHUD::ShowFloatingDamage(const FVector& Target, float Damage)

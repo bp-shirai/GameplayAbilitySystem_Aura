@@ -11,6 +11,10 @@
 #include "AuraGameplayTags.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
+#include "BehaviorTree/BehaviorTreeComponent.h"
+#include "BehaviorTree/BlackboardComponent.h"
+#include "BehaviorTree/BehaviorTree.h"
+
 AAuraEnemy::AAuraEnemy()
 {
 	GetMesh()->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
@@ -28,6 +32,30 @@ AAuraEnemy::AAuraEnemy()
 	HealthBar->SetDrawAtDesiredSize(true);
 	HealthBar->SetInitialSharedLayerName("HUD");
 	HealthBar->SetInitialLayerZOrder(0);
+
+	bUseControllerRotationPitch = false;
+	bUseControllerRotationRoll = false;
+	bUseControllerRotationYaw = false;
+	GetCharacterMovement()->bUseControllerDesiredRotation = true;
+
+	OwnedGameplayTags.AddTagFast(Team_Enemy);
+}
+
+void AAuraEnemy::PossessedBy(AController* NewController)
+{
+	Super::PossessedBy(NewController);
+
+	if (HasAuthority())
+	{
+		AuraAIController = Cast<AAuraAIController>(NewController);
+		
+		AuraAIController->InitializeBehaviorTree(BehaviorTree);
+		AuraAIController->RunBehaviorTree(BehaviorTree);
+		AuraAIController->GetBlackboardComponent()->SetValueAsBool("HitReacting", false);
+		AuraAIController->GetBlackboardComponent()->SetValueAsBool("RangedAttacker", CharacterClass != ECharacterClass::Warrior);
+	
+		
+	}
 }
 
 void AAuraEnemy::HighlightActor()
@@ -52,7 +80,19 @@ int32 AAuraEnemy::GetPlayerLevel() const
 void AAuraEnemy::Die()
 {
 	SetLifeSpan(LifeSpan);
+	if (AuraAIController) AuraAIController->GetBlackboardComponent()->SetValueAsBool("Dead", true);
+
 	Super::Die();
+}
+
+void AAuraEnemy::SetCombatTarget_Implementation(AActor* InCombatTarget)
+{
+	CombatTarget = InCombatTarget;
+}
+
+AActor* AAuraEnemy::GetCombatTarget_Implementation() const
+{
+	return CombatTarget;
 }
 
 void AAuraEnemy::BeginPlay()
@@ -60,10 +100,16 @@ void AAuraEnemy::BeginPlay()
 	Super::BeginPlay();
 
 	GetCharacterMovement()->MaxWalkSpeed = BaseWalkSpeed;
-
 	InitAbilityActorInfo();
 
-	UAuraAbilitySystemLibrary::GiveStartupAbilities(this, AbilitySystem);
+	if (HasAuthority())
+	{		
+		// Character Class Common Abilities
+		UAuraAbilitySystemLibrary::GiveStartupAbilities(this, AbilitySystem, CharacterClass);
+		AddCharacterAbilities();
+	}
+	
+	
 
 	if (UAuraUserWidget* HealthBarWidget = Cast<UAuraUserWidget>(HealthBar->GetUserWidgetObject()))
 	{
@@ -79,8 +125,8 @@ void AAuraEnemy::BeginPlay()
 		OnHealthChanged.Broadcast(AuraAS->GetHealth());
 		OnMaxHealthChanged.Broadcast(AuraAS->GetMaxHealth());
 
-		// Register Effect Event callback
-		AbilitySystem->RegisterGameplayTagEvent(Effect_HitReact, EGameplayTagEventType::NewOrRemoved).AddUObject(this, &ThisClass::OnHitReactTagChanged);;
+		// Register State Tag Event callback
+		AbilitySystem->RegisterGameplayTagEvent(State_HitReact, EGameplayTagEventType::NewOrRemoved).AddUObject(this, &ThisClass::OnHitReactTagChanged);;
 	}
 }
 
@@ -89,7 +135,10 @@ void AAuraEnemy::InitAbilityActorInfo()
 	AbilitySystem->InitAbilityActorInfo(this, this);
 	Cast<UAuraAbilitySystemComponent>(AbilitySystem)->AbilityActorInfoSet();
 
-	InitializeDefaultAttributes();
+	if (HasAuthority())
+	{
+		InitializeDefaultAttributes();
+	}
 }
 
 void AAuraEnemy::InitializeDefaultAttributes() const
@@ -101,4 +150,10 @@ void AAuraEnemy::OnHitReactTagChanged(const FGameplayTag CallbackTag, int32 NewC
 {
 	bHitReacting = NewCount > 0;
 	GetCharacterMovement()->MaxWalkSpeed = bHitReacting ? 0.f : BaseWalkSpeed;
+	
+	if (AuraAIController && AuraAIController->GetBlackboardComponent())
+	{
+		AuraAIController->GetBlackboardComponent()->SetValueAsBool("HitReacting", bHitReacting);
+	}
+	
 }

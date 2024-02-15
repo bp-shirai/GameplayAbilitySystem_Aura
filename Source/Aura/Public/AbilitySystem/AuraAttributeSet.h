@@ -164,6 +164,13 @@ public:
 	FGameplayAttributeData IncomingDamage;
 	ATTRIBUTE_ACCESSORS(ThisClass, IncomingDamage)
 
+	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_DamageResistance, Category = "Attributes|Meta")
+	FGameplayAttributeData DamageResistance;
+	ATTRIBUTE_ACCESSORS(ThisClass, DamageResistance)
+
+	UPROPERTY(BlueprintReadOnly, Category = "Attributes|Meta")
+	FGameplayAttributeData AbilityDamage;
+	ATTRIBUTE_ACCESSORS(ThisClass, AbilityDamage)
 
 	UFUNCTION()
 	void OnRep_Health(const FGameplayAttributeData& OldValue) const;
@@ -207,10 +214,12 @@ public:
 	void OnRep_ManaRegeneration(const FGameplayAttributeData& OldValue) const;
 	UFUNCTION()
 	void OnRep_MoveSpeed(const FGameplayAttributeData& OldValue) const;
+	UFUNCTION()
+	void OnRep_DamageResistance(const FGameplayAttributeData& OldValue) const;
 
 private:
 	void SetEffectProperties(const struct FGameplayEffectModCallbackData& Data, OUT FEffectProperties& Props) const;
 
-	void ShowFloatingText(const FEffectProperties& Props, float Damage) const;
+	void ShowFloatingText(const FEffectProperties& Props, float Damage, bool bBlockedHit, bool bCriticalHit) const;
 
 };

@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "GameplayEffectTypes.h"
+#include "GameplayTagAssetInterface.h"
 #include "AuraEffectActor.generated.h"
 
 class USphereComponent;
@@ -23,33 +24,38 @@ enum class EEffectApplicationPolicy
 UENUM(BlueprintType)
 enum class EEffectRemovalPolicy
 {
-	RemoveOnEndOverlap,
 	DoNotRemove,
+	RemoveOnEndOverlap,
 };
 
 
 UCLASS(Abstract)
-class AURA_API AAuraEffectActor : public AActor
+class AURA_API AAuraEffectActor : public AActor, public IGameplayTagAssetInterface
 {
 	GENERATED_BODY()
 
 public:
 	AAuraEffectActor();
 
+	virtual void GetOwnedGameplayTags(FGameplayTagContainer& TagContainer) const override;
+
 protected:
 	virtual void BeginPlay() override;
 
-	UFUNCTION(BlueprintCallable, Category = "Effects")
+	UFUNCTION(BlueprintCallable)
 	void ApplyEffectToTarget(AActor* TargetActor, TSubclassOf<UGameplayEffect> EffectClass);
 
-	UFUNCTION(BlueprintCallable, Category = "Effects")
+	UFUNCTION(BlueprintCallable)
 	void OnOverlap(AActor* TargetActor);
 
-	UFUNCTION(BlueprintCallable, Category = "Effects")
+	UFUNCTION(BlueprintCallable)
 	void OnEndOverlap(AActor* TargetActor);
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Effects")
-	bool bDestroyOnEffectRemoval = false;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Effects")
+	bool bDestroyOnEffectApplication = true;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Effects")
+	bool bApplyEffectsToEnemies = false;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Effects")
 	TSubclassOf<UGameplayEffect> InstantEffectClass;
@@ -70,12 +76,19 @@ protected:
 	EEffectApplicationPolicy InfiniteEffectApplicationPolicy = EEffectApplicationPolicy::DoNotApply;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Effects")
-	EEffectRemovalPolicy InfiniteEffectRemovalPolicy = EEffectRemovalPolicy::RemoveOnEndOverlap;
+	EEffectRemovalPolicy InfiniteEffectRemovalPolicy = EEffectRemovalPolicy::DoNotRemove;
 
 	TMap<FActiveGameplayEffectHandle, UAbilitySystemComponent*> ActiveEffectHandles;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Effects")
 	float ActorLevel = 1.f;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Effects")
+	FGameplayTagContainer OwnedGameplayTags;
+
+private:
+
+	bool IsApplyActor(const AActor* TargetActor) const;
 };
 
 /*

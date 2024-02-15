@@ -20,41 +20,52 @@ void UAuraProjectileSpell::ActivateAbility(const FGameplayAbilitySpecHandle Hand
 
 }
 
-void UAuraProjectileSpell::SpawnProjectile(const FVector& ProjectileTargetLocation)
+void UAuraProjectileSpell::SpawnProjectile(const FVector& ProjectileTargetLocation, const FGameplayTag& SocketTag, bool bOverridePitch, float PitchOverride)
 {	
 	AActor* OwnerActor = GetOwningActorFromActorInfo();
 	APawn* AvatarActor = Cast<APawn>(GetAvatarActorFromActorInfo());
-	
-	if (AvatarActor && AvatarActor->HasAuthority())
+	//ICombatInterface* CombatInterface = Cast<ICombatInterface>(AvatarActor);
+
+	if (AvatarActor && AvatarActor->HasAuthority()&& AvatarActor->Implements<UCombatInterface>())
 	{
-		if (ICombatInterface* CombatInterface = Cast<ICombatInterface>(AvatarActor))
+		//TODO: Set the projectile rotation.
+		const FVector SocketLocation = ICombatInterface::Execute_GetCombatSocketLocation(AvatarActor, SocketTag);
+		FRotator Rotation = (ProjectileTargetLocation - SocketLocation).Rotation();
+		if (bOverridePitch)
 		{
-			//TODO: Set the projectile rotation.
-
-			const FVector SocketLocation = CombatInterface->GetCombatSocketLocation();
-			FRotator Rotation = (ProjectileTargetLocation - SocketLocation).Rotation();
-			Rotation.Pitch = 0.f;
-
-			FTransform SpawnTransform;
-			SpawnTransform.SetLocation(SocketLocation);
-			SpawnTransform.SetRotation(Rotation.Quaternion());
-
-			//Cast<APawn>(OwnerActor)
-			AAuraProjectile* Projectile = GetWorld()->SpawnActorDeferred<AAuraProjectile>(ProjectileClass, SpawnTransform, OwnerActor, AvatarActor, ESpawnActorCollisionHandlingMethod::AlwaysSpawn);
-
-			//TODO: Give the projectile a GameplayEffectSpec for causing damage.
-
-			const UAbilitySystemComponent* SourceASC = GetAbilitySystemComponentFromActorInfo();
-			const FGameplayEffectSpecHandle SpecHandle = SourceASC->MakeOutgoingSpec(DamageEffectClass, GetAbilityLevel(), SourceASC->MakeEffectContext());
-			
-			// Assign DamageTag
-			const float ScaledDamage = Damage.GetValueAtLevel(GetAbilityLevel() + 10);
-
-			UAbilitySystemBlueprintLibrary::AssignTagSetByCallerMagnitude(SpecHandle, Effect_Damage, ScaledDamage);
-			
-			Projectile->DamageEffectSpecHandle = SpecHandle;
-
-			Projectile->FinishSpawning(SpawnTransform);
+			Rotation.Pitch = PitchOverride;
 		}
+
+		FTransform SpawnTransform;
+		SpawnTransform.SetLocation(SocketLocation);
+		SpawnTransform.SetRotation(Rotation.Quaternion());
+	
+
+		//Cast<APawn>(OwnerActor)
+		AAuraProjectile* Projectile = GetWorld()->SpawnActorDeferred<AAuraProjectile>(ProjectileClass, SpawnTransform, OwnerActor, AvatarActor, ESpawnActorCollisionHandlingMethod::AlwaysSpawn);
+
+		//TODO: Give the projectile a GameplayEffectSpec for causing damage.
+
+		const UAbilitySystemComponent* SourceASC = GetAbilitySystemComponentFromActorInfo();
+		const FGameplayEffectSpecHandle SpecHandle = SourceASC->MakeOutgoingSpec(DamageEffectClass, GetAbilityLevel(), SourceASC->MakeEffectContext());
+
+
+		//	const float ScaledDamage = Damage.GetValueAtLevel(GetAbilityLevel());
+		//	UAbilitySystemBlueprintLibrary::AssignTagSetByCallerMagnitude(SpecHandle, Effect_Damage, ScaledDamage);
+
+		for (auto& Pair : DamageTypes)
+		{
+			// Assign DamageType DataTag
+			const float ScaledDamage = Pair.Value.GetValueAtLevel(GetAbilityLevel());// CT_Damage
+			UAbilitySystemBlueprintLibrary::AssignTagSetByCallerMagnitude(SpecHandle, Pair.Key, ScaledDamage);
+			// Add DamageType AssetTag
+			UAbilitySystemBlueprintLibrary::AddAssetTag(SpecHandle, Pair.Key);
+		}
+
+		Projectile->DamageEffectSpecHandle = SpecHandle;
+
+		Projectile->FinishSpawning(SpawnTransform);
+
+		//	}
 	}
 }

@@ -12,6 +12,7 @@
 #include "Interaction/CombatInterface.h"
 #include "Kismet/GameplayStatics.h"
 #include "Player/AuraPlayerController.h"
+#include "AbilitySystem/AuraAbilitySystemLibrary.h"
 
 
 
@@ -50,6 +51,8 @@ void UAuraAttributeSet::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
 	DOREPLIFETIME_CONDITION_NOTIFY(ThisClass, MaxHealth, COND_None, REPNOTIFY_Always);
 	DOREPLIFETIME_CONDITION_NOTIFY(ThisClass, MaxMana, COND_None, REPNOTIFY_Always);
 	DOREPLIFETIME_CONDITION_NOTIFY(ThisClass, MoveSpeed, COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(ThisClass, DamageResistance, COND_None, REPNOTIFY_Always);
+
 
 	DOREPLIFETIME_CONDITION_NOTIFY(ThisClass, Health, COND_None, REPNOTIFY_Always);
 	DOREPLIFETIME_CONDITION_NOTIFY(ThisClass, Mana, COND_None, REPNOTIFY_Always);
@@ -68,7 +71,7 @@ void UAuraAttributeSet::PreAttributeBaseChange(const FGameplayAttribute& Attribu
 		NewValue = FMath::Clamp(NewValue, 0.f, GetMaxMana());
 	}
 
-	UE_LOG(LogAura, Log, TEXT("PreAttributeBaseChange [%s::%s] = %f"), *GetNameSafe(GetOwningActor()), *Attribute.GetName(), NewValue);
+	//UE_LOG(LogAura, Log, TEXT("PreAttributeBaseChange [%s::%s] = %f"), *GetNameSafe(GetOwningActor()), *Attribute.GetName(), NewValue);
 }
 
 void UAuraAttributeSet::PreAttributeChange(const FGameplayAttribute& Attribute, float& NewValue)
@@ -119,6 +122,8 @@ void UAuraAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallba
 		SetIncomingDamage(0.f);
 		if (LocalIncomingDamage > 0.f)
 		{
+			FGameplayTagContainer HitReactTags(State_HitReact);
+
 			const float NewHealth = GetHealth() - LocalIncomingDamage;
 			SetHealth(FMath::Clamp(NewHealth, 0.f, GetMaxHealth()));
 
@@ -128,30 +133,42 @@ void UAuraAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallba
 				if (ICombatInterface* Combat = Cast<ICombatInterface>(Props.TargetAvatarActor))
 				{
 					Combat->Die();
-					//Combat->OnDie();
 				}
+				HitReactTags.AddTag(State_HitReact_Dead);
 			}
 			else
 			{
-				const FGameplayTagContainer TagContainer(Effect_HitReact);
-				Props.TargetASC->TryActivateAbilitiesByTag(TagContainer);
+				
 			}
 
 			// Show Damage Text
-			ShowFloatingText(Props, LocalIncomingDamage);
+			const bool bBlocked = UAuraAbilitySystemLibrary::IsBlockedHit(Props.EffectContextHandle);
+			const bool bCritical = UAuraAbilitySystemLibrary::IsCriticalHit(Props.EffectContextHandle);
+			ShowFloatingText(Props, LocalIncomingDamage, bBlocked, bCritical);
+			
+			if (bBlocked) HitReactTags.AddTag(State_HitReact_BlockedHit);
+			if (bCritical) HitReactTags.AddTag(State_HitReact_CriticalHit);
+
+			Props.TargetASC->TryActivateAbilitiesByTag(HitReactTags);
 		}
 	}
 }
 
 
-void UAuraAttributeSet::ShowFloatingText(const FEffectProperties& Props, float Damage) const
+void UAuraAttributeSet::ShowFloatingText(const FEffectProperties& Props, float Damage, bool bBlockedHit, bool bCriticalHit) const
 {
 	if (Props.SourceCharacter != Props.TargetCharacter)
 	{
-		AAuraPlayerController* PC = Cast<AAuraPlayerController>(Props.SourceController);//Cast<AAuraPlayerController>(UGameplayStatics::GetPlayerController(Props.SourceCharacter, 0));
-		if (PC)
+		AAuraPlayerController* SourcePC = Cast<AAuraPlayerController>(Props.SourceController);
+		if (SourcePC)
 		{
-			PC->ShowDamageNumber_Client(Damage, Props.TargetCharacter);
+			SourcePC->ShowDamageNumber_Client(Damage, Props.TargetCharacter, bBlockedHit, bCriticalHit);
+			return;
+		}
+		AAuraPlayerController* TargetPC = Cast<AAuraPlayerController>(Props.TargetController);
+		if (TargetPC)
+		{
+			TargetPC->ShowDamageNumber_Client(Damage, Props.TargetCharacter, bBlockedHit, bCriticalHit);
 		}
 	}
 }
@@ -242,6 +259,11 @@ void UAuraAttributeSet::OnRep_MoveSpeed(const FGameplayAttributeData& OldValue) 
 	GAMEPLAYATTRIBUTE_REPNOTIFY(ThisClass, MoveSpeed, OldValue);
 }
 
+void UAuraAttributeSet::OnRep_DamageResistance(const FGameplayAttributeData& OldValue) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(ThisClass, DamageResistance, OldValue);
+}
+
 void UAuraAttributeSet::SetEffectProperties(const FGameplayEffectModCallbackData& Data, OUT FEffectProperties& Props) const
 {
 	// Source = causer of the effect, Target = target of the effect (owner of this AS)
@@ -264,6 +286,13 @@ void UAuraAttributeSet::SetEffectProperties(const FGameplayEffectModCallbackData
 				Props.SourceCharacter = Cast<ACharacter>(Props.SourceController->GetPawn());
 			}
 		}
+	
+	
+		// Set the causer actor based on context if it's set
+		// if (Context.GetEffectCauser())
+		// {
+		//		SourceActor = Context.GetEffectCauser();
+		// }
 	}
 
 	if (Data.Target.AbilityActorInfo.IsValid() && Data.Target.AbilityActorInfo->AvatarActor.IsValid())
