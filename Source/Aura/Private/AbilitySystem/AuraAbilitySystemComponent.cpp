@@ -3,15 +3,18 @@
 
 #include "AbilitySystem/AuraAbilitySystemComponent.h"
 #include "AbilitySystem/Abilities/AuraGameplayAbility.h"
+#include "AuraGameplayTags.h"
+#include "Aura.h"
 
 
 void UAuraAbilitySystemComponent::AbilityActorInfoSet()
 {
-	OnGameplayEffectAppliedDelegateToSelf.AddUObject(this, &ThisClass::GameplayEffectApplied_Client);
+	OnGameplayEffectAppliedDelegateToSelf.AddUObject(this, &ThisClass::OnGameplayEffectAppliedToSelf_Client);
 }
 
 void UAuraAbilitySystemComponent::AddCharacterAbilities(const TArray<TSubclassOf<UGameplayAbility>>& Abilities)
 {
+
 	for (const TSubclassOf<UGameplayAbility> AbilityClass : Abilities)
 	{
 		FGameplayAbilitySpec AbilitySpec = FGameplayAbilitySpec(AbilityClass, 1);
@@ -20,12 +23,10 @@ void UAuraAbilitySystemComponent::AddCharacterAbilities(const TArray<TSubclassOf
 			AbilitySpec.DynamicAbilityTags.AddTag(AuraAbility->StartupInputTag);
 			GiveAbility(AbilitySpec);
 		}
-
-	
-		
-		//GiveAbility(AbilitySpec);
 		//GiveAbilityAndActivateOnce(AbilitySpec);
 	}
+
+	OnAbilitiesGiven.Broadcast();
 }
 
 void UAuraAbilitySystemComponent::AbilityInputTagHeld(const FGameplayTag& InputTag)
@@ -40,6 +41,7 @@ void UAuraAbilitySystemComponent::AbilityInputTagHeld(const FGameplayTag& InputT
 			if (AbilitySpec.IsActive() == false)
 			{
 				TryActivateAbility(AbilitySpec.Handle);
+				//UE_LOG(LogAura, Log, TEXT("Input ID = %d"), AbilitySpec.InputID);
 			}
 		}
 	}
@@ -58,10 +60,71 @@ void UAuraAbilitySystemComponent::AbilityInputTagReleased(const FGameplayTag& In
 	}
 }
 
-void UAuraAbilitySystemComponent::GameplayEffectApplied_Client_Implementation(UAbilitySystemComponent* AbilitySystemComponent, const FGameplayEffectSpec& EffectSpec, FActiveGameplayEffectHandle ActiveEffectHandle)
+void UAuraAbilitySystemComponent::OnGiveAbility(FGameplayAbilitySpec& AbilitySpec)
+{
+	Super::OnGiveAbility(AbilitySpec);
+
+	OnGiveAbilityCallbacks.Broadcast(AbilitySpec);
+
+	//UE_LOG(LogAura, Warning, TEXT("%s : %s : %s"), TEXT(__FUNCTION__), *GetNameSafe(this->GetOwnerActor()), *AbilitySpec.GetDebugString());
+}
+
+void UAuraAbilitySystemComponent::OnGameplayEffectAppliedToSelf_Client_Implementation(UAbilitySystemComponent* AbilitySystemComponent, const FGameplayEffectSpec& EffectSpec, FActiveGameplayEffectHandle ActiveEffectHandle)
 {
 	FGameplayTagContainer TagContainer;
 	EffectSpec.GetAllAssetTags(TagContainer);
 
-	OnEffectAssetTagsApplied.Broadcast(TagContainer);
+	OnAssetTagsApplied.Broadcast(TagContainer);
+}
+
+const FGameplayTag& UAuraAbilitySystemComponent::GetAbilityTagFromSpec(const FGameplayAbilitySpec& AbilitySpec) const
+{
+	if (AbilitySpec.Ability)
+	{
+		for (auto& Tag : AbilitySpec.Ability.Get()->AbilityTags)
+		{
+			if (Tag.MatchesTag(Abilities_All))
+			{
+				return Tag;
+			}
+		}
+	}
+	return FGameplayTag::EmptyTag;
+}
+
+const FGameplayTag& UAuraAbilitySystemComponent::GetInputTagFromSpec(const FGameplayAbilitySpec& AbilitySpec) const
+{
+	if (AbilitySpec.Ability)
+	{
+		for (auto& Tag : AbilitySpec.DynamicAbilityTags)
+		{
+			if (Tag.MatchesTag(Input_All))
+			{
+				return Tag;
+			}
+		}
+	}
+	return FGameplayTag::EmptyTag;
+}
+
+
+void UAuraAbilitySystemComponent::OnRep_ActivateAbilities()
+{
+	Super::OnRep_ActivateAbilities();
+
+	OnAbilitiesGiven.Broadcast();
+
+	//UE_LOG(LogAura, Warning, TEXT("%s : %s"), TEXT(__FUNCTION__), *GetNameSafe(GetOwnerActor()));
+}
+
+int32 UAuraAbilitySystemComponent::GetInputID(const TSubclassOf<UGameplayAbility> AbilityClass) const
+{
+	int32 InputID = -1;
+
+	if (auto AuraAbility = Cast<UAuraGameplayAbility>(AbilityClass->GetDefaultObject()))
+	{
+		InputID = static_cast<int32>(AuraAbility->AbilityInputID);
+	}
+
+	return InputID;
 }

@@ -82,6 +82,13 @@ void UVitalProgressBar::NativeConstruct()
 void UVitalProgressBar::NativeDestruct()
 {
 	auto ASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(Cast<AActor>(WidgetController));
+
+	ASC->AbilityCommittedCallbacks.AddLambda([this](UGameplayAbility* Ability) 
+	{
+			//OnAbilityCommited(Ability);
+			// BP Func :  CooldownDurarion = CooldownLeft Ability->GetCooldownTimeRemainnig()
+	});
+
 	if (IsValid(ASC))
 	{
 		ASC->GetGameplayAttributeValueChangeDelegate(CurrentAttribute).Remove(CurrentChangedHandle);

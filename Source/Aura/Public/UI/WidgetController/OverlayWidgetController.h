@@ -13,6 +13,9 @@
 
 class UAuraUserWidget;
 struct FOnAttributeChangeData;
+class UAbilityInfo;
+struct FAuraAbilityInfo;
+class ULevelUpInfo;
 
 
 USTRUCT(BlueprintType)
@@ -35,6 +38,8 @@ struct FUIWidgetRow : public FTableRowBase
 
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnMessageWidgetRow, const FUIWidgetRow&, Row);
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnGiveAbilityInfo, const FAuraAbilityInfo&, AbilityInfo, const FGameplayTag&, InputTag);
 
 /**
  * 
@@ -63,20 +68,31 @@ public:
 	FOnAttributeChanged OnMaxManaChanged;
 
 	// OnEffectMessageTags
-	UPROPERTY(BlueprintAssignable, Category = "Message Data")
+	UPROPERTY(BlueprintAssignable, Category = "Widget Data")
 	FOnMessageWidgetRow OnMessageWidgetRow;
 
+	UPROPERTY(BlueprintAssignable, Category = "Widget Data")
+	FOnGiveAbilityInfo OnGiveAbilityInfo;
+
+	UPROPERTY(BlueprintAssignable, Category = "Attributes")
+	FOnAttributeChanged OnXPPercentChanged;
+
+
 protected:
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Message Data")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Widget Data")
 	TObjectPtr<UDataTable> MessageWidgetDataTable;
 
-	//void HealthChanged(const FOnAttributeChangeData& Data) const;
-	//void MaxHealthChanged(const FOnAttributeChangeData& Data) const;
-	//void ManaChanged(const FOnAttributeChangeData& Data) const;
-	//void MaxManaChanged(const FOnAttributeChangeData& Data) const;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Widget Data")
+	TObjectPtr<UAbilityInfo> AbilityInfo;
+
 
 	template<typename T>
 	T* GetDataTableRowByTag(UDataTable* DataTable, const FGameplayTag& Tag);
+
+
+	void OnAbilitiesGiven();
+
+	void OnXPChanged(int32 NewXP) const;
 };
 
 template<typename T>

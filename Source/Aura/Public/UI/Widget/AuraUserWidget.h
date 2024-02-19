@@ -6,6 +6,9 @@
 #include "Blueprint/UserWidget.h"
 #include "AuraUserWidget.generated.h"
 
+
+class UGameplayAbility;
+
 /**
  * 
  */
@@ -24,4 +27,10 @@ public:
 
 	UFUNCTION(BlueprintImplementableEvent, Category = "WidgetController")
 	void OnSetWidgetController();
+
+	UPROPERTY(EditDefaultsOnly, Category = "WidgetController")
+	bool bAbilityCommittedCallbacks;
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "WidgetController")
+	void OnAbilityCommitted(UGameplayAbility* Ability);
 };

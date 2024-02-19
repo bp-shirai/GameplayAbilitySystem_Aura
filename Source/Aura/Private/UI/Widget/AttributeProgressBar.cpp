@@ -30,8 +30,6 @@ void UAttributeProgressBar::StopAnim()
 
 void UAttributeProgressBar::NativePreConstruct()
 {
-	Super::NativePreConstruct();
-
 	if (RootBox)
 	{
 		RootBox->SetWidthOverride(BoxWidth);
@@ -41,6 +39,15 @@ void UAttributeProgressBar::NativePreConstruct()
 	if (ProgressBar)InitBarStyle(ProgressBar, ProgressBarMaterial);
 	if (GhostBar) InitBarStyle(GhostBar, GhostBarMaterial);
 	if (Background) InitBarStyle(Background, nullptr);
+	
+	/*
+	if (bUseMaterialParameter)
+	{
+		ProgressBarDynamicMaterial = UMaterialInstanceDynamic::Create(ProgressBarMaterial, this);
+		ProgressBar->SetBrushFromMaterial(ProgressBarDynamicMaterial);
+	}*/
+
+	Super::NativePreConstruct(); // This invokes the Blueprint PerConstruct
 }
 
 void UAttributeProgressBar::NativeDestruct()
@@ -51,14 +58,26 @@ void UAttributeProgressBar::NativeDestruct()
 		ASC->GetGameplayAttributeValueChangeDelegate(CurrentAttribute).Remove(CurrentChangedHandle);
 		ASC->GetGameplayAttributeValueChangeDelegate(MaxAttribute).Remove(MaxChangedHandle);
 	}
+	if (auto World = GetWorld())
+	{
+		World->GetTimerManager().ClearTimer(WaitTimerHandle);
+		World->GetTimerManager().ClearTimer(HideTimerHandle);
+	}
 	Super::NativeDestruct();
 }
 
 void UAttributeProgressBar::SetPercent(float Percent)
 {
 	NewPercent = Percent;
-	if (ProgressBar) ProgressBar->SetRenderScale({ NewPercent, 1.f });
-
+	if (bUseMaterialParameter)
+	{
+		//if (GhostBarDynamicMaterial) GhostBarDynamicMaterial->SetScalarParameterValue("Percent", Percent);
+		if (ProgressBar) ProgressBar->SetColorAndOpacity({ 1.f, 1.f, 1.f, Percent });
+	}
+	else
+	{
+		if (ProgressBar) ProgressBar->SetRenderScale({ NewPercent, 1.f });
+	}
 	// Using Delay
 	if (auto World = GetWorld())
 	{
@@ -77,7 +96,15 @@ void UAttributeProgressBar::SetPercent(float Percent)
 void UAttributeProgressBar::InitPercent(float Percent)
 {
 	NewPercent = Percent;
-	if (ProgressBar) ProgressBar->SetRenderScale({ NewPercent, 1.f });
+	if (bUseMaterialParameter)
+	{
+		if (ProgressBar) ProgressBar->SetColorAndOpacity({ 1.f, 1.f, 1.f, Percent });
+	}
+	else
+	{
+		if (ProgressBar) ProgressBar->SetRenderScale({ NewPercent, 1.f });
+	}
+	
 	CurrentPercent = Percent;
 	ChangeGauge(CurrentPercent);
 
@@ -86,7 +113,14 @@ void UAttributeProgressBar::InitPercent(float Percent)
 
 void UAttributeProgressBar::ChangeGauge(float Percent)
 {
-	if (GhostBar) GhostBar->SetRenderScale({ Percent, 1.f });
+	if (bUseMaterialParameter)
+	{
+		if (GhostBar) GhostBar->SetColorAndOpacity({ 1.f, 1.f, 1.f, Percent });
+	}
+	else
+	{
+		if (GhostBar) GhostBar->SetRenderScale({ Percent, 1.f });
+	}
 }
 
 void UAttributeProgressBar::SetBarPercent(float InValue, float InMaxValue, bool bInitSet)
@@ -107,8 +141,6 @@ void UAttributeProgressBar::NativeTick(const FGeometry& MyGeometry, float InDelt
 {
 	if (bIsAnimation)
 	{
-		Super::NativeTick(MyGeometry, InDeltaTime); // remove call pos
-
 		//float Speed = AnimSpeed * InDeltaTime;
 		//CurrentPercent += (NewPercent - CurrentPercent) * Speed;
 		CurrentPercent = FMath::FInterpTo(CurrentPercent, NewPercent, InDeltaTime, InterpSpeed);
@@ -128,6 +160,8 @@ void UAttributeProgressBar::NativeTick(const FGeometry& MyGeometry, float InDelt
 			ChangeGauge(CurrentPercent);
 			PlayAnim();
 		}
+		
+		Super::NativeTick(MyGeometry, InDeltaTime);
 	}
 }
 

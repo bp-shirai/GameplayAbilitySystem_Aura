@@ -2,7 +2,7 @@
 
 
 #include "AbilitySystem/Data/AttributeInfo.h"
-
+#include "Aura.h"
 
 static const FAuraAttributeInfo EmptyInfo;
 
@@ -19,7 +19,7 @@ const FAuraAttributeInfo& UAttributeInfo::FindAttributeInfoForTag(const FGamepla
 	
 	if (bLogNotFound)
 	{
-		UE_LOG(LogTemp, Error, TEXT("Can't find Info for AttributeTag [%s] on AttributeInfo [%s]."), *AttributeTag.ToString(), *GetNameSafe(this));
+		UE_LOG(LogAura, Error, TEXT("Can't find Info for AttributeTag [%s] on AttributeInfo [%s]."), *AttributeTag.ToString(), *GetNameSafe(this));
 	}
 	return EmptyInfo;
 }
@@ -29,7 +29,7 @@ const FAuraAttributeInfo* UAttributeInfo::FindAttributeInfo(const FGameplayTag& 
 	const FAuraAttributeInfo* Info = AttributeInfoMap.Find(AttributeTag);
 	if (Info == nullptr)
 	{
-		UE_LOG(LogTemp, Error, TEXT("Can't find Info for AttributeTag [%s] on AttributeInfoMap [%s]."), *AttributeTag.ToString(), *GetNameSafe(this));
+		UE_LOG(LogAura, Error, TEXT("Can't find Info for AttributeTag [%s] on AttributeInfoMap [%s]."), *AttributeTag.ToString(), *GetNameSafe(this));
 	}
 	return Info;
 }

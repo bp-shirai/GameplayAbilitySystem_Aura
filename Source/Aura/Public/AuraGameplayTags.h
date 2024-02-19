@@ -6,6 +6,19 @@
 #include "GameplayTagContainer.h"
 #include "NativeGameplayTags.h"
 
+// Tag_Attribute
+// Tag_Ability
+// Tag_Event
+// Tag_State
+// Tag_DamageType
+// Tag_Montage
+// Tag_Socket
+// Tag_Input
+// Tag_Team
+// Tag_Message
+
+
+
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(Attributes_Primary_Strength)
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(Attributes_Primary_Intelligence)
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(Attributes_Primary_Resilience)
@@ -26,6 +39,7 @@ UE_DECLARE_GAMEPLAY_TAG_EXTERN(Attributes_Secondary_MoveSpeed)
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(Attributes_Vital_Health)
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(Attributes_Vital_Mana)
 
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(Input_All)
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(Input_LMB)
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(Input_RMB)
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(Input_Action1)
@@ -53,8 +67,11 @@ UE_DECLARE_GAMEPLAY_TAG_EXTERN(Team_Enemy)
 
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(Message_All)
 
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(Abilities_All)
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(Abilities_Attack_Default)
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(Abilities_Attack_Summon)
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(Abilities_Attack_Fire_FireBolt)
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(Cooldown_Attack_Fire_FireBolt)
 
 
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(Montage_Attack_1)

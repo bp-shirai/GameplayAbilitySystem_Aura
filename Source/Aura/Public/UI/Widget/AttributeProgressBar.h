@@ -107,6 +107,17 @@ protected:
 	UPROPERTY(EditDefaultsOnly)
 	float BoxHeight = 10.f;
 
+//	UPROPERTY(EditDefaultsOnly)
+//	bool bUseGhostBar = true;
+
+	UPROPERTY(EditDefaultsOnly)
+	bool bUseMaterialParameter;
+
+
+	//UPROPERTY(Transient)
+	//TObjectPtr<UMaterialInstanceDynamic> ProgressBarDynamicMaterial;
+	//UPROPERTY(Transient)
+	//TObjectPtr<UMaterialInstanceDynamic> GhostBarDynamicMaterial;
 
 	void InitBarStyle(UImage* Image, UMaterialInterface* Material);
 

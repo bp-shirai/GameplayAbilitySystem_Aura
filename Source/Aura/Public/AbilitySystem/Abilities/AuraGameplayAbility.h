@@ -6,6 +6,34 @@
 #include "Abilities/GameplayAbility.h"
 #include "AuraGameplayAbility.generated.h"
 
+UENUM(BlueprintType)
+enum class EAbilityInputID : uint8
+{
+	None,
+	LMB,
+	RMB,
+	Action1,
+	Action2,
+	Action3,
+	Action4,
+
+	Attack,
+	Aim,
+	Reload,
+	NextWeapon,
+	PrevWeapon,
+	DropWeapon,
+	EquipWeapon,
+	UnEquipWeapon,
+
+	Cancel,
+	Sprint,
+	Jump,
+	Crouch,
+	Confirm,
+};
+
+
 /**
  * 
  */
@@ -19,6 +47,8 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "Defaults")
 	FGameplayTag StartupInputTag;
 
+	UPROPERTY(EditDefaultsOnly, Category = "Defaults")
+	EAbilityInputID AbilityInputID = EAbilityInputID::None;
 
 
 };

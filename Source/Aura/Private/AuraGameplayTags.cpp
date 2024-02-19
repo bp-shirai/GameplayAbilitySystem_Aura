@@ -26,6 +26,7 @@ UE_DEFINE_GAMEPLAY_TAG(Attributes_Secondary_MoveSpeed, "Attributes.Secondary.Mov
 UE_DEFINE_GAMEPLAY_TAG(Attributes_Vital_Health, "Attributes.Vital.Health")
 UE_DEFINE_GAMEPLAY_TAG(Attributes_Vital_Mana, "Attributes.Vital.Mana")
 
+UE_DEFINE_GAMEPLAY_TAG(Input_All, "Input")
 UE_DEFINE_GAMEPLAY_TAG(Input_LMB, "Input.LMB")
 UE_DEFINE_GAMEPLAY_TAG(Input_RMB, "Input.RMB")
 UE_DEFINE_GAMEPLAY_TAG(Input_Action1, "Input.Action1")
@@ -54,8 +55,12 @@ UE_DEFINE_GAMEPLAY_TAG(Team_Enemy, "Team.Enemy")
 
 UE_DEFINE_GAMEPLAY_TAG(Message_All, "Message")
 
+
+UE_DEFINE_GAMEPLAY_TAG(Abilities_All, "Abilities")
 UE_DEFINE_GAMEPLAY_TAG(Abilities_Attack_Default, "Abilities.Attack.Default")
 UE_DEFINE_GAMEPLAY_TAG(Abilities_Attack_Summon, "Abilities.Attack.Summon")
+UE_DEFINE_GAMEPLAY_TAG(Abilities_Attack_Fire_FireBolt, "Abilities.Attack.Fire.FireBolt")
+UE_DEFINE_GAMEPLAY_TAG(Cooldown_Attack_Fire_FireBolt, "Cooldown.Attack.Fire.FireBolt")
 
 UE_DEFINE_GAMEPLAY_TAG(Montage_Attack_1, "Montage.Attack.1")
 UE_DEFINE_GAMEPLAY_TAG(Montage_Attack_2, "Montage.Attack.2")
